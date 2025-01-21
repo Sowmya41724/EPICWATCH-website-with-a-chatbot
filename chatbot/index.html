@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="https://t4.ftcdn.net/jpg/03/31/11/07/360_F_331110744_mRRYaPyBF4DAJn0Lzr0P4a3a2CFGa5pD.jpg">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot with Movie Recommendations</title>
+    <style>
+        /* General styles for the background */
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            font-family:'Times New Roman', Times, serif;
+            background: url('https://wallpapers.com/images/hd/horror-movie-collage-1920-x-1080-x5qzkf99dsj4b8w7.jpg') no-repeat center center/cover;
+            overflow: hidden;
+        }
+
+        /* Blurred background effect */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            backdrop-filter: blur(10px);
+            z-index: -1;
+        }
+
+        /* Navigation Bar */
+        nav {
+            background-color: #4CAF50;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav h1 {
+            margin: 0;
+            color: white;
+            font-size: 24px;
+        }
+
+        .chat-icon {
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+        }
+
+        .chat-icon img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+        }
+
+        /* Chatbot Popup Container */
+        .chat-popup {
+            display: flex;
+            flex-direction: column;
+            width: 400px;
+            height: 500px;
+            background: #fff;
+            border-radius: 10px;
+            justify-content: center;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            position: absolute;
+            top: 150px;
+            right: 550px;
+            z-index: 10;
+
+        }
+
+        .chat-header {
+            background-color: #4CAF50;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .chat-header img {
+            width: 30px;
+            height: 30px;
+        }
+
+        .chat-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .close-popup {
+            cursor: pointer;
+            font-size: 20px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            overflow: hidden;
+            padding-top: 20px;
+        }
+
+        .chat-output {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 10px;
+        }
+
+        .chat-message {
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .chat-message.user {
+            background-color: #d4f0f0;
+            align-self: flex-end;
+        }
+
+        .chat-message.chatbot {
+            background-color: #f0f0f0;
+            align-self: flex-start;
+        }
+
+        .chat-input {
+            display: flex;
+            border-top: 1px solid #ddd;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .chat-input button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .language-selector {
+            margin-top: 10px;
+        }
+
+        .language-selector label {
+            font-size: 14px;
+        }
+
+        .language-selector select {
+            margin-left: 5px;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar with Chatbot Icon -->
+    <nav>
+        <h1>MovieBot</h1>
+        <div class="chat-icon" id="chatIcon">
+            <img src="https://cdn-icons-png.flaticon.com/512/6134/6134346.png" alt="Chat Icon">
+        </div>
+    </nav>
+
+    <!-- Chatbot Popup -->
+    <div class="chat-popup" id="chatPopup">
+        <div class="chat-header">
+            <img src="https://cdn-icons-png.flaticon.com/512/6134/6134346.png" alt="Chatbot" class="chatbot-image">
+            <h3>Chatbot</h3>
+        </div>
+        <div class="chat-container" id="chatContainer">
+            <div class="chat-output" id="chatOutput"></div>
+            <div class="chat-input">
+                <input type="text" id="userInput" placeholder="Type your message...">
+                <button id="sendButton">Send</button>
+            </div>
+            <div class="language-selector">
+                <label for="languageSelect">Choose language:</label>
+                <select id="languageSelect">
+                    <option value="en-US">English</option>
+                    <option value="es-ES">Spanish</option>
+                    <option value="fr-FR">French</option>
+                    <option value="de-DE">German</option>
+                    <option value="hi-IN">Hindi</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const chatIcon = document.getElementById("chatIcon");
+        const chatPopup = document.getElementById("chatPopup");
+        const sendButton = document.getElementById("sendButton");
+        const userInput = document.getElementById("userInput");
+        const chatOutput = document.getElementById("chatOutput");
+        const languageSelect = document.getElementById("languageSelect");
+
+        const movieRecommendations = {
+            horror: ["Get Out", "A Nightmare on Elm Street", "The Conjuring"],
+            action: ["Mad Max: Fury Road", "John Wick", "Die Hard"],
+            comedy: ["Superbad", "Step Brothers", "The Hangover"],
+            drama: ["The Shawshank Redemption", "Forrest Gump", "The Godfather"],
+            "sci-fi": ["Inception", "The Matrix", "Interstellar"]
+        };
+
+        // Open the chatbot on icon click
+        chatIcon.addEventListener("click", () => {
+            chatPopup.style.display = "flex";
+        });
+
+        // Send user input and generate response
+        sendButton.addEventListener("click", () => {
+            const message = userInput.value.trim().toLowerCase();
+            if (message) {
+                appendMessage("user", message);
+                userInput.value = "";
+
+                setTimeout(() => {
+                    const response = generateResponse(message);
+                    appendMessage("chatbot", response);
+                    textToSpeech(response);
+                }, 1000);
+            }
+        });
+
+        function appendMessage(sender, message) {
+            const messageElement = document.createElement("div");
+            messageElement.className = `chat-message ${sender}`;
+            messageElement.textContent = message;
+            chatOutput.appendChild(messageElement);
+            chatOutput.scrollTop = chatOutput.scrollHeight;
+        }
+
+        function generateResponse(message) {
+            // Movie recommendation logic
+            if (message === "give movie recommendation") {
+                return "What genre do you want? (e.g., horror, action, comedy, drama, sci-fi)";
+            } else if (movieRecommendations[message]) {
+                return `Here are some ${message} movie recommendations:\n- ${movieRecommendations[message].join("\n- ")}\n\n\n Which movie are you interested in?`;
+            } else {
+                return "I don't understand. Please say 'Give movie recommendation' or specify a genre.";
+            }
+        }
+
+        function textToSpeech(text) {
+            const language = languageSelect.value;
+            const speech = new SpeechSynthesisUtterance(text);
+            speech.lang = language;
+            window.speechSynthesis.speak(speech);
+        }
+
+        // Automatically send the initial message when the page loads
+        setTimeout(() => {
+            appendMessage("chatbot", "What would you like to watch today?");
+            textToSpeech("What would you like to watch today?");
+        }, 1000);  // Delay to simulate chatbot thinking
+    });
+
+    </script>
+</body>
+</html>
